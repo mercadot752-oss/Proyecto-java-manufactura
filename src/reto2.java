@@ -1,11 +1,16 @@
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.Optional;
+
 
 class RegistroProducto{
     private String nombre;
@@ -67,6 +72,21 @@ class RegistroProducto{
     public int getMetaProduccion() {
         return meta_produccion;
     }
+    @Override
+    public String toString() {
+        return "RegistroProducto{" +
+                "nombre='" + nombre + '\'' +
+                ", codigo='" + codigo + '\'' +
+                ", linea_produccion='" + linea_produccion + '\'' +
+                ", cantidad_producida=" + cantidad_producida +
+                ", cantidad_defectuosa=" + cantidad_defectuosa +
+                ", costo_unitario=" + costo_unitario +
+                ", minutos_utilizado=" + minutos_utilizado +
+                ", kilos_materia=" + kilos_materia +
+                ", meta_produccion=" + meta_produccion +
+                '}';
+    }
+
 
 
 }
@@ -93,6 +113,60 @@ class Produccion{
     registros.stream()
             .filter(si_es_alto)
             .forEach(mostrar_registro);
+
+
+    // cumplimiento de meta, convertir a porcentaje
+        Function<RegistroProducto, Double> calcular_cumplimiento = r -> (r.getCantidadProducida() / (double) r.getMetaProduccion())*100;
+        System.out.println("Cumplimiento de P001: " + calcular_cumplimiento.apply(registros.get(0)));
+    // costo que debe tener por cada cosa
+        Function<RegistroProducto, Double> cuanto_fabricacion = p -> (p.getCostoUnitario() * p.getCantidadProducida());
+        System.out.println("Lo que debe producir P001 es: "+ cuanto_fabricacion.apply(registros.get(0)));
+    // calcular perdidas economicas y cuanto seria con las perdidas
+        Function<RegistroProducto, Double> perdidas_fabrucacion = f -> (f.getCantidadDefectuosa()* f.getCostoUnitario());
+        System.out.println("el calculo de perdidas se le aplico a P004: "+perdidas_fabrucacion.apply(registros.get(3)));
+
+    // generar nuevo registro
+        Supplier<RegistroProducto> generar_registro_prueba = () -> new RegistroProducto(
+                "Arandela Test", "P67", "Linea1", 500, 10, 0.05, 100, 8.0, 450
+        );
+
+        RegistroProducto registroPrueba = generar_registro_prueba.get();
+        System.out.println("Registro de prueba generado: " + registroPrueba);
+    // sacar el maz y el min de los registros
+        Optional<RegistroProducto> mejor = registros.stream().max(Comparator.comparing(calcular_cumplimiento::apply));
+
+        Optional<RegistroProducto> peor = registros.stream().min(Comparator.comparing(calcular_cumplimiento::apply));
+
+        System.out.println("El mejor desempeño es de: "+mejor.get());
+        System.out.println("El peor desempeño es de: "+peor.get());
+
+    // identificar lienas bajo cumplimiento, sumar todo sacar promedio y ver cuales estan de bajo cumplimiento
+        Function<List<RegistroProducto>, Double> calcular_promedio_general = lista ->
+                lista.stream()
+                        .mapToDouble(calcular_cumplimiento::apply)
+                        .sum() / lista.size();
+
+        double promedioGeneral = calcular_promedio_general.apply(registros);
+        System.out.println("Promedio general de cumplimiento: " + promedioGeneral);
+    // metemos en una lista los que pertenecen a promedios bajos
+
+        List<RegistroProducto> promedio_bajos = registros.stream()
+                .filter(bajo ->  calcular_cumplimiento.apply(bajo)< promedioGeneral)
+                .collect(Collectors.toList());
+        System.out.println("los que tienen bajo registro son:");
+        promedio_bajos.forEach(mostrar_registro);
+    // calcular total producido
+    int total_producido = registros.stream()
+            .mapToInt(RegistroProducto::getCantidadProducida)
+            .sum();
+
+    System.out.println("el total producido fue de: "+total_producido);
+
+    // determinar cuanto dinero se ha invertido en la produccion, multiplucar cada uno por su precio unitario y sumar todos con cada precio
+        double invertido = registros.stream()
+                .mapToDouble(cuanto_fabricacion::apply)
+                .sum();
+        System.out.println("lo que se invirtio en total a la empresa fue: "+invertido);
 
 
 
