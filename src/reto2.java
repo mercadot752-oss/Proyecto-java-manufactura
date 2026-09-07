@@ -91,7 +91,7 @@ class RegistroProducto{
 
 }
 
-class Produccion{
+class  Produccion{
     public static void main(String[] args){
         List<RegistroProducto> registros = new ArrayList<>(Arrays.asList(
                 // nombre, codigo, linea, cantidadProducida, cantidadDefectuosa, costoUnitario, minutosUtilizados, kgMateriaPrima, metaProduccion
@@ -168,7 +168,18 @@ class Produccion{
                 .sum();
         System.out.println("lo que se invirtio en total a la empresa fue: "+invertido);
 
+        // Transformar registros en informacion para supervisores
+        Function<RegistroProducto, String> reporte_supervisor = registro ->
+                "SUPERVISOR INFO -> Linea: " + registro.getLineaProduccion() +
+                        " | Codigo producto: " + registro.getCodigo() +
+                        " | Producciion defectuosa: " + (registro.getCantidadDefectuosa() * 100.0 / registro.getCantidadProducida()) + "%";
 
+        System.out.println("\n--- Reporte para Supervisores ---");
+        List <String> lista_reportes = registros.stream()
+                .map(reporte_supervisor)
+                .collect(Collectors.toList());
+
+        lista_reportes.forEach(System.out::println);
 
     }
 }
