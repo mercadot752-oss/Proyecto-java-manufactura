@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 
 class RegistroProducto{
@@ -67,6 +68,11 @@ class RegistroProducto{
 
     public double getKilosMateria() {
         return kilos_materia;
+    }
+
+    public void setCantidadProducida(int cantidad_agregada, double kilos_agregados ){
+        this.cantidad_producida += cantidad_agregada;
+        this. kilos_materia += kilos_agregados;
     }
 
     public int getMetaProduccion() {
@@ -179,7 +185,18 @@ class  Produccion{
                 .map(reporte_supervisor)
                 .collect(Collectors.toList());
 
-        lista_reportes.forEach(System.out::println);
+        lista_reportes.forEach(producto -> System.out.println(producto));
 
+        // Modificar cantidades y peso
+        BiConsumer<RegistroProducto, double[]> agregar_produccion = (producto, extras) -> {
+            producto.setCantidadProducida((int) extras[0], extras[1]);
+
+            System.out.println("Actualizado " + producto.getCodigo() +
+                    " | Nueva cantidad: " + producto.getCantidadProducida() +
+                    " | Nuevo peso total: " + producto.getKilosMateria());
+        };
+
+        System.out.println("\nActualización de Unidades y Peso");
+        agregar_produccion.accept(registros.get(1), new double[]{300, 15.5});
     }
 }
